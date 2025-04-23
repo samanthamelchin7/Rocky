@@ -49,13 +49,18 @@
     .button:active {
       transform: scale(0.95);
     }
+    .button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+      transform: none;
+    }
     .hidden {
       display: none !important;
     }
     #game-area {
       position: relative;
       width: 100%;
-      height: 300px;
+      height: 350px;
       background-color: #222;
       border-radius: 8px;
       margin: 20px 0;
@@ -72,21 +77,22 @@
       background-size: cover;
       background-position: center;
       border-radius: 5px;
-      transition: left 0.3s ease-out, transform 0.3s ease-out;
+      transition: left 0.2s ease-out, transform 0.3s ease-out;
       z-index: 2;
     }
     #jeff {
       position: absolute;
-      width: 80px;
-      height: 80px;
-      bottom: 20px;
-      right: -100px;
+      width: 100px;
+      height: 100px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
       background-image: url('https://i.imgur.com/PJdQIF5.jpg');
       background-size: cover;
       background-position: center;
       border-radius: 5px;
-      transition: right 0.5s ease-in-out;
-      z-index: 1;
+      transition: transform 0.3s ease-in-out;
+      z-index: 10;
     }
     .cigarette {
       position: absolute;
@@ -95,10 +101,18 @@
       background: linear-gradient(to bottom, #fff 0%, #fff 70%, #ff9900 70%, #ff9900 100%);
       border-radius: 2px;
       box-shadow: 0 0 10px #ff9900;
-      cursor: pointer;
+      transition: top 2s linear;
+      z-index: 1;
     }
-    .cigarette:hover {
-      filter: brightness(1.5);
+    .cigarette:after {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 0;
+      width: 8px;
+      height: 5px;
+      background-color: #ff9900;
+      border-radius: 2px;
     }
     .phone {
       position: absolute;
@@ -108,10 +122,8 @@
       border: 2px solid #00aaff;
       border-radius: 4px;
       box-shadow: 0 0 10px #00aaff;
-      cursor: pointer;
-    }
-    .phone:hover {
-      filter: brightness(1.5);
+      transition: top 3s linear;
+      z-index: 1;
     }
     .phone:after {
       content: '';
@@ -126,17 +138,19 @@
     }
     #jeff-question {
       position: absolute;
-      top: 10px;
+      top: 60%;
       left: 10%;
       width: 80%;
       padding: 10px;
       background-color: #444;
       border-radius: 5px;
-      font-size: 16px;
+      font-size: 18px;
+      font-weight: bold;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      z-index: 10;
+      z-index: 11;
       opacity: 0;
       transition: opacity 0.5s;
+      text-align: center;
     }
     #controls {
       margin-top: 20px;
@@ -196,6 +210,30 @@
       background-color: #444;
       transform: scale(1.05);
     }
+    #game-over {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      color: #ff3333;
+    }
+    #game-over button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ff3333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
     #instructions {
       background-color: #222;
       padding: 15px;
@@ -214,6 +252,10 @@
     #instructions li {
       margin-bottom: 8px;
     }
+    .score-item {
+      font-weight: bold;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
@@ -222,23 +264,25 @@
       <h1 class="game-title">🚬 Rocky's Ciggie Chase 🚬</h1>
       
       <div id="instructions">
-        <h3>HOW TO PLAY</h3>
+        <h3>ROCKY'S WORLD</h3>
+        <p>In Rocky's reality, cunning and creativity matter—catch cigarettes and make calls in various ways, save time, and show Jeff who's in charge. Collect smokes, dodge awkward questions, and prove that Rocky always finds a way to make life easier for himself and harder for Jeff Stacy.</p>
         <ul>
-          <li>Click on cigarettes and phones directly in the game area to collect them</li>
-          <li>Move Rocky with the LEFT/RIGHT buttons (or arrow keys)</li>
-          <li>When Jeff appears, quickly press DODGE (or down arrow)</li>
-          <li>Collect 3 cigarettes and 2 phones to win!</li>
+          <li>Cigarettes and phones fall from the top of the screen</li>
+          <li>Move Rocky with the LEFT/RIGHT buttons (or arrow keys) to catch them</li>
+          <li>When Jeff appears with a question, quickly press DODGE to avoid him</li>
+          <li>Catch 3 cigarettes and 2 phones to win!</li>
+          <li>If you don't dodge Jeff in time, you lose!</li>
         </ul>
       </div>
       
       <div id="status-bar">
         <div class="progress">
           <div class="progress-icon">🚬</div>
-          <div id="cig-count">0/3</div>
+          <div id="cig-count" class="score-item">0/3</div>
         </div>
         <div class="progress">
           <div class="progress-icon">📱</div>
-          <div id="phone-count">0/2</div>
+          <div id="phone-count" class="score-item">0/2</div>
         </div>
       </div>
       
@@ -252,7 +296,7 @@
       <div id="controls">
         <button class="button" id="left-btn">← MOVE LEFT</button>
         <button class="button" id="right-btn">MOVE RIGHT →</button>
-        <button class="button" id="dodge-btn">↓ DODGE ↓</button>
+        <button class="button" id="dodge-btn" disabled>↓ DODGE ↓</button>
         <button class="button hidden" id="restart-btn">PLAY AGAIN</button>
       </div>
       
@@ -260,6 +304,12 @@
         <h2>🎉 Congratulations, you win a Polish man 🎉</h2>
         <p><a href="https://drive.google.com/file/d/1VcpOn-ef0OpxsUFcmhI96vrbEiZFBUI9/view?usp=drive_link" target="_blank">Access your reward</a></p>
         <button class="button" id="play-again-btn">PLAY AGAIN</button>
+      </div>
+      
+      <div id="game-over" class="hidden">
+        <h2>GAME OVER</h2>
+        <p>Jeff caught you with his questions!</p>
+        <button id="retry-btn">TRY AGAIN</button>
       </div>
     </div>
   </div>
@@ -271,13 +321,18 @@
     let gameRunning = true;
     let rockyPosition = 50; // percentage
     let jeffActive = false;
-    let dodging = false;
+    let jeffTimer = null;
+    let itemGenerationInterval = null;
     
     // DOM elements
     const rocky = document.getElementById('rocky');
     const jeff = document.getElementById('jeff');
     const gameArea = document.getElementById('game-area');
     const jeffQuestion = document.getElementById('jeff-question');
+    const dodgeBtn = document.getElementById('dodge-btn');
+    
+    // Game area dimensions
+    const gameAreaRect = gameArea.getBoundingClientRect();
     
     // Array of random Jeff questions
     const jeffQuestions = [
@@ -294,20 +349,24 @@
       gameRunning = true;
       rockyPosition = 50;
       jeffActive = false;
-      dodging = false;
       
-      // Clear any existing items
+      // Clear any existing items and timers
       document.querySelectorAll('.cigarette, .phone').forEach(item => item.remove());
+      if (itemGenerationInterval) clearInterval(itemGenerationInterval);
+      if (jeffTimer) clearTimeout(jeffTimer);
       
       // Reset UI
       updateStatus();
       
       // Position Rocky
       rocky.style.left = `${rockyPosition}%`;
-      jeff.style.right = '-100px';
+      jeff.style.transform = 'translate(-50%, -50%) scale(0)';
+      jeffQuestion.style.opacity = '0';
+      dodgeBtn.disabled = true;
       
       // Hide screens
       document.getElementById('win-screen').classList.add('hidden');
+      document.getElementById('game-over').classList.add('hidden');
       
       // Show buttons
       document.getElementById('left-btn').classList.remove('hidden');
@@ -315,74 +374,98 @@
       document.getElementById('dodge-btn').classList.remove('hidden');
       document.getElementById('restart-btn').classList.add('hidden');
       
-      // Generate initial items
-      generateItems();
+      // Start generating items
+      startItemGeneration();
       
       // Start Jeff appearances
       startJeffAppearances();
     }
     
-    // Generate collectable items
-    function generateItems() {
-      // Generate cigarettes
-      for (let i = 0; i < 3; i++) {
-        createItem('cigarette', 10 + (Math.random() * 80), 10 + (Math.random() * 60));
-      }
+    // Start generating falling items
+    function startItemGeneration() {
+      // Create initial items
+      createFallingItem('cigarette');
       
-      // Generate phones
-      for (let i = 0; i < 2; i++) {
-        createItem('phone', 10 + (Math.random() * 80), 10 + (Math.random() * 60));
-      }
+      // Create more items periodically
+      itemGenerationInterval = setInterval(() => {
+        if (!gameRunning) return;
+        
+        // Randomly create cigarette or phone
+        if (Math.random() < 0.7) {
+          createFallingItem('cigarette');
+        } else {
+          createFallingItem('phone');
+        }
+      }, 2000);
     }
     
-    function createItem(type, xPos, yPos) {
+    // Create a falling item
+    function createFallingItem(type) {
+      if (!gameRunning) return;
+      
       const item = document.createElement('div');
       item.className = type;
-      item.style.left = `${xPos}%`;
-      item.style.top = `${yPos}%`;
       
-      // Make items clickable
-      item.addEventListener('click', () => {
-        if (type === 'cigarette') {
-          collectCig(item);
-        } else if (type === 'phone') {
-          collectPhone(item);
-        }
-      });
+      // Random position from left
+      const leftPos = 5 + Math.random() * 90; // 5% to 95%
+      item.style.left = `${leftPos}%`;
       
+      // Start from top (outside screen)
+      item.style.top = '-50px';
+      
+      // Add to game area
       gameArea.appendChild(item);
-    }
-    
-    // Collect cigarette
-    function collectCig(item) {
-      if (!gameRunning || cigs >= 3) return;
       
-      cigs++;
-      item.remove();
+      // Start falling
+      setTimeout(() => {
+        item.style.top = '120%'; // Fall past bottom
+      }, 10);
       
-      // Add sparkle effect
-      rocky.classList.add('sparkle');
-      setTimeout(() => rocky.classList.remove('sparkle'), 1000);
-      
-      // Update status
-      updateStatus();
-      
-      // Check win condition
-      checkWin();
-    }
-    
-    // Collect phone
-    function collectPhone(item) {
-      if (!gameRunning || phones >= 2) return;
-      
-      phones++;
-      item.remove();
-      
-      // Update status
-      updateStatus();
-      
-      // Check win condition
-      checkWin();
+      // Check for collision and remove when done
+      const checkInterval = setInterval(() => {
+        if (!gameRunning) {
+          clearInterval(checkInterval);
+          return;
+        }
+        
+        // Check for collision with Rocky
+        const itemRect = item.getBoundingClientRect();
+        const rockyRect = rocky.getBoundingClientRect();
+        
+        // If item is below screen, remove it
+        if (itemRect.top > gameAreaRect.bottom) {
+          clearInterval(checkInterval);
+          item.remove();
+          return;
+        }
+        
+        // Check collision
+        if (
+          rockyRect.left < itemRect.right &&
+          rockyRect.right > itemRect.left &&
+          rockyRect.top < itemRect.bottom &&
+          rockyRect.bottom > itemRect.top
+        ) {
+          // Collect the item
+          if (type === 'cigarette' && cigs < 3) {
+            cigs++;
+            rocky.classList.add('sparkle');
+            setTimeout(() => rocky.classList.remove('sparkle'), 1000);
+          } else if (type === 'phone' && phones < 2) {
+            phones++;
+          }
+          
+          // Remove the item
+          clearInterval(checkInterval);
+          item.remove();
+          
+          // Update status
+          updateStatus();
+          
+          // Check win condition
+          checkWin();
+        }
+      }, 100);
     }
     
     // Move Rocky
@@ -390,80 +473,71 @@
       if (!gameRunning) return;
       
       if (direction === 'left' && rockyPosition > 5) {
-        rockyPosition -= 10;
+        rockyPosition -= 8;
       } else if (direction === 'right' && rockyPosition < 95) {
-        rockyPosition += 10;
+        rockyPosition += 8;
       }
       
       rocky.style.left = `${rockyPosition}%`;
     }
     
-    // Dodge function
-    function dodge() {
-      if (!gameRunning || dodging || !jeffActive) return;
-      
-      dodging = true;
-      
-      // Duck down
-      rocky.style.transform = 'translateX(-50%) translateY(40px)';
-      
-      // Make Jeff go away
-      jeff.style.right = '-100px';
-      jeffQuestion.style.opacity = '0';
-      jeffActive = false;
-      
-      // Return to normal position
-      setTimeout(() => {
-        rocky.style.transform = 'translateX(-50%)';
-        dodging = false;
-      }, 1000);
+    // Start Jeff appearances
+    function startJeffAppearances() {
+      scheduleJeffAppearance();
     }
     
-    // Random Jeff appearances
-    function startJeffAppearances() {
-      // Jeff appears on a random interval
-      const jeffInterval = setInterval(() => {
-        if (!gameRunning) {
-          clearInterval(jeffInterval);
-          return;
-        }
-        
-        if (!jeffActive && Math.random() < 0.3) { // 30% chance
+    // Schedule next Jeff appearance
+    function scheduleJeffAppearance() {
+      if (!gameRunning) return;
+      
+      // Random time between 3-8 seconds
+      const nextAppearance = 3000 + Math.random() * 5000;
+      
+      jeffTimer = setTimeout(() => {
+        if (gameRunning) {
           jeffAppears();
         }
-      }, 3000);
+      }, nextAppearance);
     }
     
+    // Jeff appears
     function jeffAppears() {
       if (jeffActive || !gameRunning) return;
       
       jeffActive = true;
+      dodgeBtn.disabled = false;
       
-      // Jeff appears from the right
-      jeff.style.right = '20px';
+      // Show Jeff in center
+      jeff.style.transform = 'translate(-50%, -50%) scale(1)';
       
       // Show a random question
       const randomIndex = Math.floor(Math.random() * jeffQuestions.length);
       jeffQuestion.textContent = jeffQuestions[randomIndex];
       jeffQuestion.style.opacity = '1';
       
-      // If not dodged in time, Jeff messes with your game
-      setTimeout(() => {
-        if (jeffActive) {
-          // Generate a new item of each type (if needed)
-          if (cigs < 3) {
-            createItem('cigarette', 10 + (Math.random() * 80), 10 + (Math.random() * 60));
-          }
-          if (phones < 2) {
-            createItem('phone', 10 + (Math.random() * 80), 10 + (Math.random() * 60));
-          }
-          
-          // Make Jeff leave
-          jeff.style.right = '-100px';
-          jeffQuestion.style.opacity = '0';
-          jeffActive = false;
+      // If not dodged in time, game over
+      jeffTimer = setTimeout(() => {
+        if (jeffActive && gameRunning) {
+          gameOver();
         }
-      }, 2000);
+      }, 1500); // 1.5 seconds to dodge
+    }
+    
+    // Dodge function
+    function dodge() {
+      if (!gameRunning || !jeffActive) return;
+      
+      // Hide Jeff
+      jeff.style.transform = 'translate(-50%, -50%) scale(0)';
+      jeffQuestion.style.opacity = '0';
+      jeffActive = false;
+      dodgeBtn.disabled = true;
+      
+      // Clear the game over timer
+      clearTimeout(jeffTimer);
+      
+      // Schedule next appearance
+      scheduleJeffAppearance();
     }
     
     // Update status display
@@ -484,12 +558,19 @@
       }
     }
     
+    // Game over
+    function gameOver() {
+      gameRunning = false;
+      document.getElementById('game-over').classList.remove('hidden');
+    }
+    
     // Event listeners
     document.getElementById('left-btn').addEventListener('click', () => moveRocky('left'));
     document.getElementById('right-btn').addEventListener('click', () => moveRocky('right'));
     document.getElementById('dodge-btn').addEventListener('click', dodge);
     document.getElementById('restart-btn').addEventListener('click', initGame);
     document.getElementById('play-again-btn').addEventListener('click', initGame);
+    document.getElementById('retry-btn').addEventListener('click', initGame);
     
     // Keyboard controls
     document.addEventListener('keydown', (event) => {
@@ -498,7 +579,9 @@
       } else if (event.key === 'ArrowRight') {
         moveRocky('right');
       } else if (event.key === 'ArrowDown') {
-        dodge();
+        if (!dodgeBtn.disabled) {
+          dodge();
+        }
       }
     });
     
